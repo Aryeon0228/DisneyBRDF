@@ -1,0 +1,43 @@
+# Disney BRDF Viewer
+
+디즈니 BRDF 파라미터를 실시간으로 조절할 수 있는 3D 뷰어입니다.
+
+## 다운로드
+[disney_brdf_pyvista.py 다운로드](https://github.com/당신아이디/저장소이름/raw/main/disney_brdf_pyvista.py)
+
+## 실행 방법
+
+1. Python 설치 (3.8 이상)
+2. PyVista 설치:
+```bash
+pip install pyvista
+```
+
+3. 스크립트 실행:
+```bash
+python disney_brdf_pyvista.py
+```
+
+## 기능
+- 8가지 Disney BRDF 파라미터 조절
+- 실시간 3D 프리뷰
+- 7가지 재질 프리셋 (금, 크롬, 플라스틱 등)
+
+## 파라미터
+- Base Color (RGB)
+- Metallic
+- Roughness
+- Specular (IOR)
+- Anisotropic
+- Anisotropic Rotation
+- Clearcoat
+- Clearcoat Roughness
+```
+
+---
+
+## 다운로드 링크는?
+
+파일 올리고 나면 자동으로:
+```
+https://github.com/당신아이디/저장소이름/blob/main/disney_brdf_pyvista.py
