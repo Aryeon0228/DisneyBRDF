@@ -1228,10 +1228,10 @@ camera.position.set(0, 0, 5);
 renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.physicallyCorrectLights = true;
+renderer.useLegacyLights = false;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.2;
-renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
 // Controls
@@ -1348,17 +1348,20 @@ const env = envPresets[preset] || envPresets.studio;
 
 // PMREMGenerator for environment map
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
-pmremGenerator.compileEquirectangularShader();
 
-// Create environment scene
+// Create environment scene with gradient
 const envScene = new THREE.Scene();
-const envGeometry = new THREE.SphereGeometry(50, 32, 32);
+
+// Use a larger sphere for better quality
+const envGeometry = new THREE.SphereGeometry(500, 64, 64);
 
 // Gradient shader material
 const envMaterial = new THREE.ShaderMaterial({
 uniforms: {
 topColor: { value: new THREE.Color(env.topColor) },
-bottomColor: { value: new THREE.Color(env.bottomColor) }
+bottomColor: { value: new THREE.Color(env.bottomColor) },
+offset: { value: 0 },
+exponent: { value: 0.6 }
 },
 vertexShader: `
 varying vec3 vWorldPosition;
@@ -1371,21 +1374,30 @@ gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 fragmentShader: `
 uniform vec3 topColor;
 uniform vec3 bottomColor;
+uniform float offset;
+uniform float exponent;
 varying vec3 vWorldPosition;
 void main() {
-float h = normalize(vWorldPosition).y;
-gl_FragColor = vec4(mix(bottomColor, topColor, max(h, 0.0)), 1.0);
+float h = normalize(vWorldPosition + offset).y;
+float t = max(pow(max(h, 0.0), exponent), 0.0);
+vec3 color = mix(bottomColor, topColor, t);
+gl_FragColor = vec4(color, 1.0);
 }
 `,
-side: THREE.BackSide
+side: THREE.BackSide,
+depthWrite: false
 });
 
 const envMesh = new THREE.Mesh(envGeometry, envMaterial);
 envScene.add(envMesh);
 
+// Add ambient light to environment scene for better capture
+const envLight = new THREE.AmbientLight(0xffffff, 1);
+envScene.add(envLight);
+
 // Generate environment map
-const envMap = pmremGenerator.fromScene(envScene, 0.04).texture;
-scene.environment = envMap;
+const renderTarget = pmremGenerator.fromScene(envScene, 0, 0.1, 100);
+scene.environment = renderTarget.texture;
 scene.background = new THREE.Color(env.bottomColor);
 
 // Update light colors
