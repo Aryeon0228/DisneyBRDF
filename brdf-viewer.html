@@ -4,11 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Real-time PBR Material Simulator - Disney BRDF</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+<script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
 <style>
 * {
 margin: 0;
@@ -935,7 +939,15 @@ a balance between physical accuracy and ease of use.
 <div>Loading...</div>
 </div>
 
-<script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+
+// Make THREE available globally for inline handlers
+window.THREE = THREE;
+
 // Global variables
 let scene, camera, renderer, controls;
 let currentMesh;
@@ -1020,9 +1032,21 @@ special: [
 { id: 'carPaint', name: 'Car Paint (Red)' },
 { id: 'carPaintBlue', name: 'Car Paint (Blue)' },
 { id: 'carPaintBlack', name: 'Car Paint (Black)' },
+{ id: 'carPaintPearl', name: 'Car Paint (Pearl)' },
 { id: 'pearl', name: 'Pearl' },
+{ id: 'pearlPink', name: 'Pearl (Pink)' },
+{ id: 'pearlBlue', name: 'Pearl (Blue)' },
 { id: 'iridescent', name: 'Iridescent' },
+{ id: 'iridescentGreen', name: 'Iridescent (Green)' },
+{ id: 'iridescentPurple', name: 'Iridescent (Purple)' },
+{ id: 'iridescentGold', name: 'Iridescent (Gold)' },
 { id: 'holographic', name: 'Holographic' },
+{ id: 'holographicRainbow', name: 'Holographic (Rainbow)' },
+{ id: 'opal', name: 'Opal' },
+{ id: 'abalone', name: 'Abalone Shell' },
+{ id: 'beetleShell', name: 'Beetle Shell' },
+{ id: 'bubbleSoap', name: 'Soap Bubble' },
+{ id: 'oilSlick', name: 'Oil Slick' },
 { id: 'silk', name: 'Silk' },
 { id: 'satin', name: 'Satin' }
 ]
@@ -1155,17 +1179,65 @@ carPaintBlack: {
 color: '#0a0a0a', metallic: 0, roughness: 0.05, specular: 0.5,
 clearcoat: 1.0, clearcoatRoughness: 0.02, sheen: 0, sheenRoughness: 1, iridescence: 0, iridescenceIOR: 1.3
 },
+carPaintPearl: {
+color: '#f0f0f0', metallic: 0.1, roughness: 0.1, specular: 0.6,
+clearcoat: 1.0, clearcoatRoughness: 0.03, sheen: 0, sheenRoughness: 1, iridescence: 0.4, iridescenceIOR: 1.6
+},
 pearl: {
 color: '#f5e6d3', metallic: 0, roughness: 0.25, specular: 0.6,
 clearcoat: 0.8, clearcoatRoughness: 0.1, sheen: 0.5, sheenRoughness: 0.5, iridescence: 0.5, iridescenceIOR: 1.5
+},
+pearlPink: {
+color: '#ffe4e8', metallic: 0, roughness: 0.2, specular: 0.6,
+clearcoat: 0.8, clearcoatRoughness: 0.08, sheen: 0.4, sheenRoughness: 0.5, iridescence: 0.6, iridescenceIOR: 1.5
+},
+pearlBlue: {
+color: '#e0f0ff', metallic: 0, roughness: 0.2, specular: 0.6,
+clearcoat: 0.8, clearcoatRoughness: 0.08, sheen: 0.4, sheenRoughness: 0.5, iridescence: 0.6, iridescenceIOR: 1.5
 },
 iridescent: {
 color: '#c0c0ff', metallic: 0.3, roughness: 0.2, specular: 0.5,
 clearcoat: 0.5, clearcoatRoughness: 0.1, sheen: 0.3, sheenRoughness: 0.5, iridescence: 1.0, iridescenceIOR: 1.8
 },
+iridescentGreen: {
+color: '#a0ffa0', metallic: 0.3, roughness: 0.15, specular: 0.5,
+clearcoat: 0.6, clearcoatRoughness: 0.08, sheen: 0.2, sheenRoughness: 0.5, iridescence: 1.0, iridescenceIOR: 1.7
+},
+iridescentPurple: {
+color: '#d0a0ff', metallic: 0.3, roughness: 0.15, specular: 0.5,
+clearcoat: 0.6, clearcoatRoughness: 0.08, sheen: 0.2, sheenRoughness: 0.5, iridescence: 1.0, iridescenceIOR: 1.9
+},
+iridescentGold: {
+color: '#ffe0a0', metallic: 0.4, roughness: 0.15, specular: 0.5,
+clearcoat: 0.6, clearcoatRoughness: 0.08, sheen: 0.2, sheenRoughness: 0.5, iridescence: 0.8, iridescenceIOR: 1.6
+},
 holographic: {
 color: '#e0e0e0', metallic: 0.5, roughness: 0.1, specular: 0.7,
 clearcoat: 1.0, clearcoatRoughness: 0, sheen: 0, sheenRoughness: 1, iridescence: 1.0, iridescenceIOR: 2.2
+},
+holographicRainbow: {
+color: '#ffffff', metallic: 0.6, roughness: 0.05, specular: 0.8,
+clearcoat: 1.0, clearcoatRoughness: 0, sheen: 0.1, sheenRoughness: 0.5, iridescence: 1.0, iridescenceIOR: 2.333
+},
+opal: {
+color: '#f0f8ff', metallic: 0, roughness: 0.15, specular: 0.6,
+clearcoat: 0.7, clearcoatRoughness: 0.05, sheen: 0.3, sheenRoughness: 0.6, iridescence: 0.8, iridescenceIOR: 1.45
+},
+abalone: {
+color: '#a8d8d8', metallic: 0.2, roughness: 0.2, specular: 0.5,
+clearcoat: 0.8, clearcoatRoughness: 0.1, sheen: 0.2, sheenRoughness: 0.5, iridescence: 0.9, iridescenceIOR: 1.7
+},
+beetleShell: {
+color: '#2a4a2a', metallic: 0.4, roughness: 0.15, specular: 0.5,
+clearcoat: 0.9, clearcoatRoughness: 0.05, sheen: 0.1, sheenRoughness: 0.5, iridescence: 1.0, iridescenceIOR: 1.8
+},
+bubbleSoap: {
+color: '#f0f0ff', metallic: 0, roughness: 0.02, specular: 0.9,
+clearcoat: 1.0, clearcoatRoughness: 0, sheen: 0, sheenRoughness: 1, iridescence: 1.0, iridescenceIOR: 1.33
+},
+oilSlick: {
+color: '#1a1a2e', metallic: 0.1, roughness: 0.05, specular: 0.7,
+clearcoat: 1.0, clearcoatRoughness: 0, sheen: 0, sheenRoughness: 1, iridescence: 1.0, iridescenceIOR: 1.5
 },
 silk: {
 color: '#f5deb3', metallic: 0, roughness: 0.4, specular: 0.4,
@@ -1203,7 +1275,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
 // Controls
-controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 
@@ -1464,7 +1536,7 @@ const url = URL.createObjectURL(file);
 if (currentMesh) scene.remove(currentMesh);
 
 if (fileName.endsWith('.obj')) {
-const loader = new THREE.OBJLoader();
+const loader = new OBJLoader();
 loader.load(url, function(object) {
 object.traverse(function(child) {
 if (child.isMesh) {
@@ -1493,7 +1565,7 @@ showLoading(false);
 alert('Failed to load model');
 });
 } else if (fileName.endsWith('.gltf') || fileName.endsWith('.glb')) {
-const loader = new THREE.GLTFLoader();
+const loader = new GLTFLoader();
 loader.load(url, function(gltf) {
 gltf.scene.traverse(function(child) {
 if (child.isMesh) {
@@ -1650,6 +1722,24 @@ modal.classList.remove('active');
 });
 }
 });
+
+// Expose functions to window for HTML event handlers
+window.changeGeometry = changeGeometry;
+window.updateMaterial = updateMaterial;
+window.updatePresetList = updatePresetList;
+window.applyPresetFromSelect = applyPresetFromSelect;
+window.applyPreset = applyPreset;
+window.updateLighting = updateLighting;
+window.changeEnvironment = changeEnvironment;
+window.toggleSSAO = toggleSSAO;
+window.loadCustomModel = loadCustomModel;
+window.loadNormalMap = loadNormalMap;
+window.resetModel = resetModel;
+window.toggleReference = toggleReference;
+window.openPresetModal = openPresetModal;
+window.closePresetModal = closePresetModal;
+window.openInfoModal = openInfoModal;
+window.closeInfoModal = closeInfoModal;
 
 // Initialize
 init();
