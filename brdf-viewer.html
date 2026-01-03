@@ -945,7 +945,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 
-// Make THREE available globally for inline handlers
+// Make THREE available globally
 window.THREE = THREE;
 
 // Global variables
@@ -1032,21 +1032,13 @@ special: [
 { id: 'carPaint', name: 'Car Paint (Red)' },
 { id: 'carPaintBlue', name: 'Car Paint (Blue)' },
 { id: 'carPaintBlack', name: 'Car Paint (Black)' },
-{ id: 'carPaintPearl', name: 'Car Paint (Pearl)' },
 { id: 'pearl', name: 'Pearl' },
-{ id: 'pearlPink', name: 'Pearl (Pink)' },
-{ id: 'pearlBlue', name: 'Pearl (Blue)' },
 { id: 'iridescent', name: 'Iridescent' },
-{ id: 'iridescentGreen', name: 'Iridescent (Green)' },
-{ id: 'iridescentPurple', name: 'Iridescent (Purple)' },
-{ id: 'iridescentGold', name: 'Iridescent (Gold)' },
 { id: 'holographic', name: 'Holographic' },
-{ id: 'holographicRainbow', name: 'Holographic (Rainbow)' },
-{ id: 'opal', name: 'Opal' },
-{ id: 'abalone', name: 'Abalone Shell' },
-{ id: 'beetleShell', name: 'Beetle Shell' },
-{ id: 'bubbleSoap', name: 'Soap Bubble' },
+{ id: 'soapBubble', name: 'Soap Bubble' },
 { id: 'oilSlick', name: 'Oil Slick' },
+{ id: 'cdSurface', name: 'CD Surface' },
+{ id: 'bismuth', name: 'Bismuth' },
 { id: 'silk', name: 'Silk' },
 { id: 'satin', name: 'Satin' }
 ]
@@ -1179,65 +1171,33 @@ carPaintBlack: {
 color: '#0a0a0a', metallic: 0, roughness: 0.05, specular: 0.5,
 clearcoat: 1.0, clearcoatRoughness: 0.02, sheen: 0, sheenRoughness: 1, iridescence: 0, iridescenceIOR: 1.3
 },
-carPaintPearl: {
-color: '#f0f0f0', metallic: 0.1, roughness: 0.1, specular: 0.6,
-clearcoat: 1.0, clearcoatRoughness: 0.03, sheen: 0, sheenRoughness: 1, iridescence: 0.4, iridescenceIOR: 1.6
-},
 pearl: {
 color: '#f5e6d3', metallic: 0, roughness: 0.25, specular: 0.6,
 clearcoat: 0.8, clearcoatRoughness: 0.1, sheen: 0.5, sheenRoughness: 0.5, iridescence: 0.5, iridescenceIOR: 1.5
-},
-pearlPink: {
-color: '#ffe4e8', metallic: 0, roughness: 0.2, specular: 0.6,
-clearcoat: 0.8, clearcoatRoughness: 0.08, sheen: 0.4, sheenRoughness: 0.5, iridescence: 0.6, iridescenceIOR: 1.5
-},
-pearlBlue: {
-color: '#e0f0ff', metallic: 0, roughness: 0.2, specular: 0.6,
-clearcoat: 0.8, clearcoatRoughness: 0.08, sheen: 0.4, sheenRoughness: 0.5, iridescence: 0.6, iridescenceIOR: 1.5
 },
 iridescent: {
 color: '#c0c0ff', metallic: 0.3, roughness: 0.2, specular: 0.5,
 clearcoat: 0.5, clearcoatRoughness: 0.1, sheen: 0.3, sheenRoughness: 0.5, iridescence: 1.0, iridescenceIOR: 1.8
 },
-iridescentGreen: {
-color: '#a0ffa0', metallic: 0.3, roughness: 0.15, specular: 0.5,
-clearcoat: 0.6, clearcoatRoughness: 0.08, sheen: 0.2, sheenRoughness: 0.5, iridescence: 1.0, iridescenceIOR: 1.7
-},
-iridescentPurple: {
-color: '#d0a0ff', metallic: 0.3, roughness: 0.15, specular: 0.5,
-clearcoat: 0.6, clearcoatRoughness: 0.08, sheen: 0.2, sheenRoughness: 0.5, iridescence: 1.0, iridescenceIOR: 1.9
-},
-iridescentGold: {
-color: '#ffe0a0', metallic: 0.4, roughness: 0.15, specular: 0.5,
-clearcoat: 0.6, clearcoatRoughness: 0.08, sheen: 0.2, sheenRoughness: 0.5, iridescence: 0.8, iridescenceIOR: 1.6
-},
 holographic: {
 color: '#e0e0e0', metallic: 0.5, roughness: 0.1, specular: 0.7,
 clearcoat: 1.0, clearcoatRoughness: 0, sheen: 0, sheenRoughness: 1, iridescence: 1.0, iridescenceIOR: 2.2
 },
-holographicRainbow: {
-color: '#ffffff', metallic: 0.6, roughness: 0.05, specular: 0.8,
-clearcoat: 1.0, clearcoatRoughness: 0, sheen: 0.1, sheenRoughness: 0.5, iridescence: 1.0, iridescenceIOR: 2.333
-},
-opal: {
-color: '#f0f8ff', metallic: 0, roughness: 0.15, specular: 0.6,
-clearcoat: 0.7, clearcoatRoughness: 0.05, sheen: 0.3, sheenRoughness: 0.6, iridescence: 0.8, iridescenceIOR: 1.45
-},
-abalone: {
-color: '#a8d8d8', metallic: 0.2, roughness: 0.2, specular: 0.5,
-clearcoat: 0.8, clearcoatRoughness: 0.1, sheen: 0.2, sheenRoughness: 0.5, iridescence: 0.9, iridescenceIOR: 1.7
-},
-beetleShell: {
-color: '#2a4a2a', metallic: 0.4, roughness: 0.15, specular: 0.5,
-clearcoat: 0.9, clearcoatRoughness: 0.05, sheen: 0.1, sheenRoughness: 0.5, iridescence: 1.0, iridescenceIOR: 1.8
-},
-bubbleSoap: {
-color: '#f0f0ff', metallic: 0, roughness: 0.02, specular: 0.9,
+soapBubble: {
+color: '#f0f8ff', metallic: 0, roughness: 0.02, specular: 0.9,
 clearcoat: 1.0, clearcoatRoughness: 0, sheen: 0, sheenRoughness: 1, iridescence: 1.0, iridescenceIOR: 1.33
 },
 oilSlick: {
 color: '#1a1a2e', metallic: 0.1, roughness: 0.05, specular: 0.7,
 clearcoat: 1.0, clearcoatRoughness: 0, sheen: 0, sheenRoughness: 1, iridescence: 1.0, iridescenceIOR: 1.5
+},
+cdSurface: {
+color: '#c0c0c0', metallic: 0.8, roughness: 0.05, specular: 0.8,
+clearcoat: 0.5, clearcoatRoughness: 0, sheen: 0, sheenRoughness: 1, iridescence: 1.0, iridescenceIOR: 2.0
+},
+bismuth: {
+color: '#8b7d6b', metallic: 0.9, roughness: 0.2, specular: 0.6,
+clearcoat: 0.3, clearcoatRoughness: 0.1, sheen: 0, sheenRoughness: 1, iridescence: 1.0, iridescenceIOR: 2.333
 },
 silk: {
 color: '#f5deb3', metallic: 0, roughness: 0.4, specular: 0.4,
