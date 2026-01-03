@@ -681,17 +681,17 @@ to { transform: rotate(360deg); }
 <div class="control-group">
 <div class="control-label">
 <span>Main Light Intensity</span>
-<span class="control-value" id="mainLightValue">1.00</span>
+<span class="control-value" id="mainLightValue">1.50</span>
 </div>
-<input type="range" id="mainLight" min="0" max="3" step="0.1" value="1" oninput="updateLighting()">
+<input type="range" id="mainLight" min="0" max="3" step="0.1" value="1.5" oninput="updateLighting()">
 </div>
 
 <div class="control-group">
 <div class="control-label">
 <span>Ambient Light Intensity</span>
-<span class="control-value" id="ambientLightValue">0.30</span>
+<span class="control-value" id="ambientLightValue">0.50</span>
 </div>
-<input type="range" id="ambientLight" min="0" max="1" step="0.01" value="0.3" oninput="updateLighting()">
+<input type="range" id="ambientLight" min="0" max="1" step="0.01" value="0.5" oninput="updateLighting()">
 </div>
 
 <div class="control-group">
@@ -1038,7 +1038,8 @@ metalness: 0,
 roughness: 0.5,
 clearcoat: 0,
 clearcoatRoughness: 0,
-reflectivity: 0.5
+reflectivity: 0.5,
+envMapIntensity: 1.0
 });
 
 // Create initial geometry (sphere)
@@ -1106,22 +1107,22 @@ createGeometry(type);
 
 function setupLights() {
 // Main light
-mainLight = new THREE.DirectionalLight(0xffffff, 1);
+mainLight = new THREE.DirectionalLight(0xffffff, 1.5);
 mainLight.position.set(5, 5, 5);
 scene.add(mainLight);
 
 // Fill light
-fillLight = new THREE.DirectionalLight(0x6688ff, 0.6);
+fillLight = new THREE.DirectionalLight(0x6688ff, 0.8);
 fillLight.position.set(-5, -3, 3);
 scene.add(fillLight);
 
 // Back light
-backLight = new THREE.DirectionalLight(0xffaa66, 0.4);
+backLight = new THREE.DirectionalLight(0xffaa66, 0.5);
 backLight.position.set(0, -5, -3);
 scene.add(backLight);
 
 // Ambient light
-ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+ambientLight = new THREE.AmbientLight(0x404040, 0.5);
 scene.add(ambientLight);
 }
 
