@@ -1,5 +1,6 @@
 import {mkdir,copyFile,readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {SOURCES,preset,illuminance,comparison,validateSettings} from './light-sources.mjs';
 import {candleLux,stopDifference,fitExposure,linearDisplay} from './lighting-physics.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-10,`${a} ≠ ${b}`);
 near(candleLux(1,1),1);near(candleLux(1,2),.25);near(candleLux(4,2),1);
@@ -9,14 +10,27 @@ near(linearDisplay(100000,.18,0),.18);
 for(const lux of [.01,.25,1,10,100,10000,100000]) near(linearDisplay(lux,.18,fitExposure(lux)),.18);
 assert.ok(linearDisplay(1,.18,0)<.000003);
 assert.ok(linearDisplay(100000,.18,fitExposure(1))>.999);
+near(illuminance(preset('moon')),.2);
+near(illuminance(preset('incandescent')),800/(4*Math.PI));
+near(illuminance(preset('incandescent')),illuminance(preset('fluorescent')));
+near(illuminance({...preset('incandescent'),distance:2}),800/(16*Math.PI));
+for (const a of Object.keys(SOURCES)) for (const b of Object.keys(SOURCES)) {
+ const fixed=comparison(preset(a),preset(b),'shared',3);
+ near(fixed.left.exposure,3);near(fixed.right.exposure,3);
+ const auto=comparison(preset(a),preset(b),'individual',0);
+ near(linearDisplay(auto.left.lux,.18,auto.left.exposure),.18);
+ near(linearDisplay(auto.right.lux,.18,auto.right.exposure),.18);
+}
+for (const bad of [{leftSource:'invalid'},{rightDistance:0},{leftCount:1.5},{rightLux:NaN},{leftSource:['sun']},{extra:true}]) assert.throws(()=>validateSettings(bad));
+validateSettings({leftSource:'moon',rightSource:'fluorescent',mode:'individual'});
 const html=await readFile('lighting-lab.html','utf8');
 const js=await readFile('lighting-lab.js','utf8');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length,'Duplicate element ids');
 for(const match of js.matchAll(/\$\('([^']+)'\)/g)) assert.ok(ids.includes(match[1]),`Missing #${match[1]}`);
-const files=['lighting-lab.html','lighting-lab.css','lighting-lab.js','lighting-physics.mjs','brdf-viewer.html'];
+const files=['light-sources.mjs','lighting-lab.html','lighting-lab.css','lighting-lab.js','lighting-physics.mjs','brdf-viewer.html'];
 await mkdir('dist/assets',{recursive:true});
-for (const name of ['candle','sun']) {
+for (const name of ['candle','sun','moon','incandescent','fluorescent']) {
  const bytes=await readFile(`assets/${name}.png`);
  assert.equal(bytes.subarray(1,4).toString(),'PNG',`Invalid ${name} asset`);
  await copyFile(`assets/${name}.png`,`dist/assets/${name}.png`);

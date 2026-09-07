@@ -1,12 +1,65 @@
-import {candleLux,stopDifference,fitExposure,linearDisplay,srgb} from './lighting-physics.mjs';
+import {fitExposure,linearDisplay,srgb} from './lighting-physics.mjs';
+import {SOURCES,preset,illuminance,comparison,validateSettings} from './light-sources.mjs';
 const $=id=>document.getElementById(id);
-const inputs=['candles','distance','daylight','reflectance','exposure','warm'];
-let mode='shared';
-const fmt=x=>x>=1000?Math.round(x).toLocaleString('en-US'):x>=10?x.toFixed(1):x.toFixed(2);
+const fmt=x=>x>=1000?Math.round(x).toLocaleString('en-US'):x>=10?x.toFixed(2):x.toFixed(2);
 const signed=x=>(x>=0?'+':'')+x.toFixed(1);
-function read(){return {count:+$('candles').value,distance:10**+$('distance').value,sun:10**+$('daylight').value,rho:+$('reflectance').value/100,exposure:+$('exposure').value,warm:$('warm').checked,mode};}
-// Analytic ray / sphere and plane intersection. Both panes share the same irradiance field.
-// The distance control changes reference illuminance, not the direction field across the sphere.
+let state={left:preset('candle'),right:preset('sun'),mode:'shared',exposure:0,rho:.18,color:true};
+let queued=false,dragSource=null;
+function refreshControls(side){
+ const s=state[side],src=SOURCES[s.source];
+ $(side+'-source').value=s.source;$(side+'-count').value=s.count;$(side+'-distance').value=Math.log10(s.distance);$(side+'-illuminance').value=Math.log10(s.lux);
+ $(side+'-point').hidden=src.kind!=='point';$(side+'-ambient').hidden=src.kind==='point';$(side+'-sun-presets').hidden=s.source!=='sun';
+ $(side+'-source-note').textContent=src.note;
+}
+function sync(){['left','right'].forEach(refreshControls);$('reflectance').value=state.rho*100;$('exposure').value=state.exposure;$('warm').checked=state.color;}
+function assign(side,id){if(!['left','right'].includes(side)||!Object.hasOwn(SOURCES,id))return;state[side]=preset(id);refreshControls(side);update();$('assignment-status').textContent=`${SOURCES[id].name}을 ${side==='left'?'왼쪽':'오른쪽'} 비교칸에 놓았습니다.`;}
+function update(){
+ const result=comparison(state.left,state.right,state.mode,state.exposure),diff=result.stopsDifference;
+ for(const side of ['left','right']){
+  const s=state[side],src=SOURCES[s.source],v=result[side],label=side==='left'?'왼쪽':'오른쪽';
+  $(side+'-name').textContent=src.name;$(side+'-art').src=`assets/${src.image}.png`;$(side+'-lux').textContent=fmt(v.lux);$(side+'-exposure').textContent=signed(v.exposure)+' stops';
+  $(side+'-count-out').value=s.count+'개';$(side+'-distance-out').value=s.distance.toFixed(2)+' m';$(side+'-illuminance-out').value=fmt(s.lux)+' lx';
+  $(side+'-distance').setAttribute('aria-valuetext',s.distance.toFixed(2)+'미터');$(side+'-illuminance').setAttribute('aria-valuetext',fmt(s.lux)+'럭스');
+  $(side+'-canvas').setAttribute('aria-label',label+' 조명('+src.name+')으로 비춘 확산 구와 바닥');
+  $(side+'-condition').textContent=src.kind==='point'?`${src.name} ${s.count}개 · ${s.distance.toFixed(2)} m · ${s.source==='candle'?'1개당 1 cd 가정':'1개당 800 lm / 전방향 가정'}`:src.condition+(Math.abs(s.lux-src.lux)>.00001?' · 조도 조절됨':'');
+  const l=linearDisplay(v.lux,state.rho,v.exposure);$(side+'-status').textContent=l<.001?'현재 노출에서 반사광이 거의 보이지 않습니다.':l>.95?'하이라이트가 흰색에 가까워집니다.':state.mode==='individual'?'18% 회색 기준에 맞춘 자동 노출입니다.':'동일한 카메라 노출로 비교 중입니다.';
+  const marker=$(side+'-marker');marker.style.left=(Math.max(0,Math.min(1,(Math.log10(v.lux)+2)/8))*100)+'%';marker.querySelector('span').textContent=label+' · '+src.name;marker.title=fmt(v.lux)+' lx';
+ }
+ $('reflectance-out').value=Math.round(state.rho*100)+'%';$('exposure-out').value=state.mode==='individual'?'각 장면 자동 조정':signed(state.exposure)+' stops';$('exposure').disabled=state.mode==='individual';
+ $('shared').setAttribute('aria-pressed',state.mode==='shared');$('individual').setAttribute('aria-pressed',state.mode==='individual');
+ $('mode-explanation').textContent=state.mode==='individual'?'각 장면의 18% 회색 기준이 비슷하게 보이도록 카메라 노출을 따로 맞춥니다. 광원의 세기는 그대로입니다.':'양쪽에 같은 카메라 노출을 적용합니다. 빛의 세기 차이를 그대로 비교해보세요.';
+ $('stops').textContent=Math.abs(diff).toFixed(2);$('ratio-text').replaceChildren();
+ if(Math.abs(diff)<1e-8){$('ratio-text').textContent='두 측정면의 조도가 같습니다.';}
+ else{const stronger=diff>0?'right':'left',name=SOURCES[state[stronger].source].name,strong=document.createElement('strong');strong.textContent=fmt(2**Math.abs(diff))+'배';$('ratio-text').append((stronger==='left'?'왼쪽':'오른쪽')+' '+name+' 쪽이 ',strong,' 강합니다.');}
+ $('takeaway').textContent=state.mode==='individual'?'비슷하게 보여도 조도는 다를 수 있습니다. 각 그림 위의 노출 보정값을 비교해보세요.':'노출을 올려도 두 빛의 물리적인 비율은 바뀌지 않습니다.';
+ $('exposure-note').textContent=state.mode==='individual'?'독립 노출 · 물리적 조도 유지':'기준: 100,000 lx / 반사율 18%';
+ document.querySelectorAll('.source-card').forEach(card=>{const id=card.dataset.source,sides=['left','right'].filter(side=>state[side].source===id);card.classList.toggle('active',sides.length>0);$('chosen-'+id).textContent=sides.map(s=>s==='left'?'왼쪽':'오른쪽').join(' · ');});
+ document.querySelectorAll('[data-lux]').forEach(b=>b.classList.toggle('selected',Math.abs(state[b.dataset.side].lux-+b.dataset.lux)<.001));
+ if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;const now=comparison(state.left,state.right,state.mode,state.exposure);for(const side of ['left','right'])render(side+'-canvas',now[side].lux,state.rho,now[side].exposure,state.color?SOURCES[state[side].source].color:[1,1,1]);});}
+ return result;
+}
+for(const side of ['left','right']){
+ $(side+'-source').onchange=e=>assign(side,e.target.value);
+ for(const key of ['count','distance','illuminance'])$(side+'-'+key).oninput=e=>{state[side][key==='illuminance'?'lux':key]=key==='count'?+e.target.value:10**+e.target.value;update();};
+ $('fit-'+side).onclick=()=>{state.mode='shared';state.exposure=fitExposure(illuminance(state[side]));$('exposure').value=state.exposure;update();};
+}
+$('reflectance').oninput=e=>{state.rho=+e.target.value/100;update();};$('exposure').oninput=e=>{state.exposure=+e.target.value;update();};$('warm').onchange=e=>{state.color=e.target.checked;update();};
+$('shared').onclick=()=>{state.mode='shared';update();};$('individual').onclick=()=>{state.mode='individual';update();};
+document.querySelectorAll('[data-assign]').forEach(b=>b.onclick=()=>assign(b.dataset.assign,b.dataset.source));
+document.querySelectorAll('[data-lux]').forEach(b=>b.onclick=()=>{state[b.dataset.side].lux=+b.dataset.lux;refreshControls(b.dataset.side);update();});
+const zones=[...document.querySelectorAll('[data-drop-side]')];
+function endDrag(){dragSource=null;document.querySelectorAll('.source-card').forEach(c=>c.classList.remove('dragging'));zones.forEach(z=>z.classList.remove('drop-ready','drag-over'));}
+document.querySelectorAll('.source-card').forEach(card=>{
+ card.addEventListener('dragstart',e=>{dragSource=card.dataset.source;e.dataTransfer.setData('application/x-penumbra-source',dragSource);e.dataTransfer.setData('text/plain',dragSource);e.dataTransfer.effectAllowed='copy';card.classList.add('dragging');zones.forEach(z=>z.classList.add('drop-ready'));});
+ card.addEventListener('dragend',endDrag);
+});
+for(const zone of zones){
+ zone.addEventListener('dragover',e=>{if(dragSource){e.preventDefault();e.dataTransfer.dropEffect='copy';zone.classList.add('drag-over');}});
+ zone.addEventListener('dragleave',e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');});
+ zone.addEventListener('drop',e=>{if(!dragSource)return;e.preventDefault();const id=e.dataTransfer.getData('application/x-penumbra-source');if(id===dragSource&&Object.hasOwn(SOURCES,id))assign(zone.dataset.dropSide,id);endDrag();});
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')endDrag();});
+$('reset').onclick=()=>{state={left:preset('candle'),right:preset('sun'),mode:'shared',exposure:0,rho:.18,color:true};endDrag();sync();update();$('assignment-status').textContent='촛불과 햇빛의 기본 비교로 초기화했습니다.';};
 const W=520,H=390,normal=[-.5,.7,.5099019513592785];
 const geometry=new Float32Array(W*H);
 for(let y=0;y<H;y++)for(let x=0;x<W;x++){
@@ -20,9 +73,9 @@ for(let y=0;y<H;y++)for(let x=0;x<W;x++){
  }
  geometry[y*W+x]=shade;
 }
-function render(id,lux,rho,stops,warm){
+function render(id,lux,rho,stops,color){
  const canvas=$(id),ctx=canvas.getContext('2d'); if(!ctx)return;
- const frame=ctx.createImageData(W,H),raw=warm?[1,.47,.16]:[1,1,1];
+ const frame=ctx.createImageData(W,H),raw=color;
  const luminance=.2126*raw[0]+.7152*raw[1]+.0722*raw[2],rgb=raw.map(c=>c/luminance);
  for(let i=0;i<W*H;i++){
   const E=lux*geometry[i],k=i*4;
@@ -37,50 +90,22 @@ function render(id,lux,rho,stops,warm){
  ctx.fillStyle=`rgb(${color.join(',')})`;ctx.fillRect(start+i*54,H-42,chipWidth,15);
  });
 }
-let queued=false;
-function update(){
- const s=read(),c=candleLux(s.count,s.distance),diff=stopDifference(c,s.sun),cExp=mode==='individual'?fitExposure(c):s.exposure,sExp=mode==='individual'?fitExposure(s.sun):s.exposure;
- $('candles-out').value=s.count+'개';$('distance-out').value=s.distance.toFixed(2)+' m';$('daylight-out').value=fmt(s.sun)+' lx';$('reflectance-out').value=Math.round(s.rho*100)+'%';$('exposure-out').value=mode==='individual'?'각각 자동 조정':signed(s.exposure)+' stops';
- $('distance').setAttribute('aria-valuetext',s.distance.toFixed(2)+'미터');$('daylight').setAttribute('aria-valuetext',fmt(s.sun)+'럭스');
- $('candle-lux').textContent=fmt(c);$('sun-lux').textContent=fmt(s.sun);
- $('mode-explanation').textContent=mode==='individual'?'각 장면의 18% 회색 기준이 비슷하게 보이도록 카메라 노출을 따로 맞춥니다. 광원의 세기는 그대로입니다.':'양쪽에 같은 카메라 노출을 적용합니다. 빛의 세기 차이를 그대로 비교해보세요.';
- $('shared').setAttribute('aria-pressed',mode==='shared');$('individual').setAttribute('aria-pressed',mode==='individual');$('exposure').disabled=mode==='individual';
- $('candle-exposure').textContent=signed(cExp)+' stops';$('sun-exposure').textContent=signed(sExp)+' stops';
- $('stops').textContent=Math.abs(diff).toFixed(2);
- const ratio=2**Math.abs(diff),source=diff>=0?'햇빛':'촛불';
- $('ratio-text').replaceChildren();
- if(Math.abs(diff)<.000001){$('ratio-text').textContent='두 측정면의 조도가 같습니다.';}
- else {const strong=document.createElement('strong');strong.textContent=fmt(ratio)+'배';$('ratio-text').append(source+'이 ',strong,' 강합니다.');}
- $('takeaway').textContent=mode==='individual'?'비슷하게 보여도 조도는 다릅니다. 각 그림 위의 노출 보정값을 비교해보세요.':'노출을 올려도 두 빛의 물리적인 비율은 바뀌지 않습니다.';
- const status=(lux,ev)=>{const l=linearDisplay(lux,s.rho,ev);return l<.001?'현재 노출에서 반사광이 거의 보이지 않습니다.':l>.95?'하이라이트가 흰색에 가까워집니다.':mode==='individual'?'조명별 18% 회색 기준으로 노출을 맞췄습니다.':'동일한 노출과 반사율로 비교 중입니다.';};
- $('candle-status').textContent=status(c,cExp);$('sun-status').textContent=status(s.sun,sExp);
- $('exposure-note').textContent=mode==='individual'?'독립 노출 · 물리적 조도는 그대로 유지':'기준: 100,000 lx / 반사율 18%';
- $('candle-marker').style.left=((Math.log10(c)+2)/7*100)+'%';$('sun-marker').style.left=((Math.log10(s.sun)+2)/7*100)+'%';
- document.querySelectorAll('[data-lux]').forEach(b=>b.classList.toggle('selected',Math.abs(Math.log10(+b.dataset.lux)-Math.log10(s.sun))<.001));
- if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;const v=read(),cl=candleLux(v.count,v.distance);render('candle-canvas',cl,v.rho,mode==='individual'?fitExposure(cl):v.exposure,v.warm);render('sun-canvas',v.sun,v.rho,mode==='individual'?fitExposure(v.sun):v.exposure,false);});}
- return {candleLux:c,sunLux:s.sun,stopsDifference:diff,candleExposure:cExp,sunExposure:sExp,mode};
-}
-inputs.forEach(id=>$(id).addEventListener('input',update));
-$('shared').onclick=()=>{mode='shared';update();};$('individual').onclick=()=>{mode='individual';update();};
-$('fit-sun').onclick=()=>{mode='shared';$('exposure').value=fitExposure(read().sun);update();};
-$('fit-candle').onclick=()=>{mode='shared';const s=read();$('exposure').value=fitExposure(candleLux(s.count,s.distance));update();};
-document.querySelectorAll('[data-lux]').forEach(b=>b.onclick=()=>{$('daylight').value=Math.log10(+b.dataset.lux);update();});
-$('reset').onclick=()=>{mode='shared';Object.entries({candles:1,distance:0,daylight:5,reflectance:18,exposure:0}).forEach(([id,v])=>$(id).value=v);$('warm').checked=true;update();};
-update();
-// Optional WebMCP entry point, using the same controls and update path as the page.
+sync();update();
 const context=document.modelContext;
 if(context?.registerTool){
- const lifecycle=new AbortController();
- const limits={candles:[1,100],distanceMeters:[.1,10],sunLux:[1,100000],reflectancePercent:[4,80],exposureStops:[-6,24]};
- try{Promise.resolve(context.registerTool({name:'configure_light_comparison',description:'Configure candle and daylight illuminance and exposure in the visible Light Lab.',inputSchema:{type:'object',properties:{candles:{type:'integer',minimum:1,maximum:100},distanceMeters:{type:'number',minimum:.1,maximum:10},sunLux:{type:'number',minimum:1,maximum:100000},reflectancePercent:{type:'number',minimum:4,maximum:80},exposureStops:{type:'number',minimum:-6,maximum:24},mode:{type:'string',enum:['shared','individual']}},additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},async execute(input){
- if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Expected an object');
- for(const [key,value] of Object.entries(input)){
- if(key==='mode'){if(!['shared','individual'].includes(value))throw new Error('Invalid exposure mode');}
- else{const range=limits[key];if(!range||typeof value!=='number'||!Number.isFinite(value)||value<range[0]||value>range[1]||(key==='candles'&&!Number.isInteger(value)))throw new Error('Invalid '+key);}
+ const lifecycle=new AbortController(),sourceEnum=Object.keys(SOURCES);
+ const inputSchema={type:'object',properties:{leftSource:{type:'string',enum:sourceEnum},rightSource:{type:'string',enum:sourceEnum},leftDistance:{type:'number',minimum:.1,maximum:10},rightDistance:{type:'number',minimum:.1,maximum:10},leftCount:{type:'integer',minimum:1,maximum:100},rightCount:{type:'integer',minimum:1,maximum:100},leftLux:{type:'number',minimum:.01,maximum:100000},rightLux:{type:'number',minimum:.01,maximum:100000},mode:{type:'string',enum:['shared','individual']},exposureStops:{type:'number',minimum:-6,maximum:24},reflectancePercent:{type:'number',minimum:4,maximum:80},showColor:{type:'boolean'}},additionalProperties:false};
+ try{Promise.resolve(context.registerTool({name:'configure_light_comparison',description:'Choose any two light sources and configure their visible comparison. Lux overrides apply only to moonlight and sunlight; candle and bulbs use count and distance.',inputSchema,annotations:{readOnlyHint:false,untrustedContentHint:false},async execute(input){
+ validateSettings(input);
+ const next=structuredClone(state);
+ for(const side of ['left','right']){
+  if(input[side+'Source']!==undefined)next[side]=preset(input[side+'Source']);
+  const point=SOURCES[next[side].source].kind==='point';
+  if(input[side+'Lux']!==undefined){if(point)throw new Error('Use count and distance for a point source');next[side].lux=input[side+'Lux'];}
+  for(const key of ['Distance','Count'])if(input[side+key]!==undefined){if(!point)throw new Error('Distance and count require a point source');next[side][key.toLowerCase()]=input[side+key];}
  }
- const mapping={candles:'candles',distanceMeters:'distance',sunLux:'daylight',reflectancePercent:'reflectance',exposureStops:'exposure'};
- for(const [key,value] of Object.entries(input)){if(key==='mode')mode=value;else $(mapping[key]).value=['distanceMeters','sunLux'].includes(key)?Math.log10(value):value;}
- const result=update();await new Promise(requestAnimationFrame);return result;
+ if(input.mode!==undefined)next.mode=input.mode;if(input.exposureStops!==undefined)next.exposure=input.exposureStops;if(input.reflectancePercent!==undefined)next.rho=input.reflectancePercent/100;if(input.showColor!==undefined)next.color=input.showColor;
+ state=next;sync();const result=update();await new Promise(requestAnimationFrame);return result;
  }},{signal:lifecycle.signal})).catch(()=>{});}catch{}
  window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true});
 }
