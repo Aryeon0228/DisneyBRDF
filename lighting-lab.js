@@ -43,6 +43,7 @@ function update(){
  $('candles-out').value=s.count+'개';$('distance-out').value=s.distance.toFixed(2)+' m';$('daylight-out').value=fmt(s.sun)+' lx';$('reflectance-out').value=Math.round(s.rho*100)+'%';$('exposure-out').value=mode==='individual'?'각각 자동 조정':signed(s.exposure)+' stops';
  $('distance').setAttribute('aria-valuetext',s.distance.toFixed(2)+'미터');$('daylight').setAttribute('aria-valuetext',fmt(s.sun)+'럭스');
  $('candle-lux').textContent=fmt(c);$('sun-lux').textContent=fmt(s.sun);
+ $('mode-explanation').textContent=mode==='individual'?'각 장면의 18% 회색 기준이 비슷하게 보이도록 카메라 노출을 따로 맞춥니다. 광원의 세기는 그대로입니다.':'양쪽에 같은 카메라 노출을 적용합니다. 빛의 세기 차이를 그대로 비교해보세요.';
  $('shared').setAttribute('aria-pressed',mode==='shared');$('individual').setAttribute('aria-pressed',mode==='individual');$('exposure').disabled=mode==='individual';
  $('candle-exposure').textContent=signed(cExp)+' stops';$('sun-exposure').textContent=signed(sExp)+' stops';
  $('stops').textContent=Math.abs(diff).toFixed(2);

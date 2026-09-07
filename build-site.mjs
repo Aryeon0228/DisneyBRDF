@@ -15,7 +15,12 @@ const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length,'Duplicate element ids');
 for(const match of js.matchAll(/\$\('([^']+)'\)/g)) assert.ok(ids.includes(match[1]),`Missing #${match[1]}`);
 const files=['lighting-lab.html','lighting-lab.css','lighting-lab.js','lighting-physics.mjs','brdf-viewer.html'];
-await mkdir('dist',{recursive:true});
+await mkdir('dist/assets',{recursive:true});
+for (const name of ['candle','sun']) {
+ const bytes=await readFile(`assets/${name}.png`);
+ assert.equal(bytes.subarray(1,4).toString(),'PNG',`Invalid ${name} asset`);
+ await copyFile(`assets/${name}.png`,`dist/assets/${name}.png`);
+}
 for(const file of files)await copyFile(file,`dist/${file}`);
 await copyFile('lighting-lab.html','dist/index.html');
 console.log('Built static site. Physics, exposure calibration, and page references verified.');
