@@ -1,6 +1,6 @@
 import {mkdir,copyFile,readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import {SOURCES,preset,illuminance,comparison,validateSettings} from './light-sources.mjs';
+import {SOURCES,preset,illuminance,comparison,validateSettings,balancedColor,comparisonColors} from './light-sources.mjs';
 import {candleLux,stopDifference,fitExposure,linearDisplay} from './lighting-physics.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-10,`${a} ≠ ${b}`);
 near(candleLux(1,1),1);near(candleLux(1,2),.25);near(candleLux(4,2),1);
@@ -23,6 +23,21 @@ for (const a of Object.keys(SOURCES)) for (const b of Object.keys(SOURCES)) {
 }
 for (const bad of [{leftSource:'invalid'},{rightDistance:0},{leftCount:1.5},{rightLux:NaN},{leftSource:['sun']},{extra:true}]) assert.throws(()=>validateSettings(bad));
 validateSettings({leftSource:'moon',rightSource:'fluorescent',mode:'individual'});
+const Y=color=>.2126*color[0]+.7152*color[1]+.0722*color[2];
+for(const id of Object.keys(SOURCES)){
+ const neutralized=balancedColor(SOURCES[id].color,SOURCES[id].color);
+ for(const channel of neutralized)near(channel,1);
+ for(const wb of ['neutral','left','right']){
+  const colors=comparisonColors(preset(id),preset('sun'),wb,true);
+  near(Y(colors.left),1);near(Y(colors.right),1);
+ }
+}
+const candleWhite=comparisonColors(preset('candle'),preset('sun'),'left',true);
+assert.ok(candleWhite.right[2]>candleWhite.right[1]&&candleWhite.right[1]>candleWhite.right[0]);
+const moonNeutral=comparisonColors(preset('moon'),preset('sun'),'neutral',true);
+assert.ok(moonNeutral.left[2]>moonNeutral.left[0]);
+assert.deepEqual(comparisonColors(preset('candle'),preset('moon'),'left',false),{left:[1,1,1],right:[1,1,1]});
+assert.throws(()=>validateSettings({whiteBalance:'unknown'}));
 const html=await readFile('lighting-lab.html','utf8');
 const js=await readFile('lighting-lab.js','utf8');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);

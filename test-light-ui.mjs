@@ -8,6 +8,8 @@ class Element {
  querySelector(){return this.child??=new Element();}
  replaceChildren(){this.children=[];this.textContent='';}
  append(...values){this.children.push(...values);this.textContent+=values.map(v=>typeof v==='string'?v:v.textContent).join('');}
+ focus(){this.focused=true;}
+ scrollIntoView(){this.scrolled=true;}
  contains(v){return v===this;}
 }
 const html=await readFile(new URL('lighting-lab.html',import.meta.url),'utf8'),nodes=new Map([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],new Element()]));
@@ -34,3 +36,12 @@ event=drag('candle');zones[0].handlers.drop(event);assert.equal(node('left-lux')
 node('individual').onclick();assert.ok(node('exposure').disabled);assert.equal(node('individual').attrs['aria-pressed'],true);
 node('reset').onclick();assert.equal(node('left-name').textContent,'촛불');assert.equal(node('right-name').textContent,'햇빛');assert.equal(node('stops').textContent,'16.61');assert.equal(node('exposure').disabled,false);
 console.log('UI handler checks passed: drop, click assignment, distance, cancel, invalid payload, per-source reset, exposure and full reset.');
+
+node('wb-left').onclick();assert.equal(node('wb-left').attrs['aria-pressed'],true);assert.equal(node('left-lux').textContent,'1.00');assert.equal(node('stops').textContent,'16.61');
+node('warm').onchange({target:{checked:false}});assert.ok(node('wb-left').disabled);assert.match(node('color-status').textContent,/밝기만/);
+node('tab-guide').onclick();assert.equal(node('guide').hidden,false);assert.equal(node('experiment-panel').hidden,true);assert.equal(node('tab-guide').attrs['aria-selected'],true);
+node('tab-guide').handlers.keydown({key:'ArrowLeft',preventDefault(){}});assert.equal(node('guide').hidden,true);assert.ok(node('tab-experiment').focused);
+node('color-help').onclick();assert.ok(node('color-guide').scrolled);assert.equal(node('guide').hidden,false);
+node('back-experiment').onclick();assert.equal(node('guide').hidden,true);
+node('reset').onclick();assert.equal(node('wb-neutral').attrs['aria-pressed'],true);assert.equal(node('wb-left').disabled,false);
+console.log('White balance controls, disabled color state, explanation tabs, keyboard navigation, help and reset verified.');
