@@ -61,3 +61,8 @@ Below each point-source distance slider, an SVG ruler compares the source positi
 Physical count/distance/lux and daylight choices now sit directly beneath the corresponding live render. Quick count buttons offer 1, 3, 10, 30, 50 and 100 sources using the same state as the count slider. The single render pair and ratio remain sticky within the experiment while users adjust controls below; at very short viewport heights stickiness is disabled to avoid covering the available space. Render height is bounded by viewport height. No duplicate canvases or parallel control states were added.
 
 Count illustrations and the human-scale distance guide live in native disclosure panels. Per-pane exposure has its own disclosure with the current correction visible when collapsed. Global brightness, white balance and drag source library remain below the primary source controls. Individual cards size to their own content so a moonlight control no longer stretches to the size of a neighbor's distance illustration.
+
+
+## Moonlight and perception guide
+
+The explanation tab now separates atmospheric yellowing of the lunar disk, the Purkinje shift in relative brightness sensitivity, rod–cone contributions to bluish impressions, and the lab's art-directed cyan. Claims link inline to NASA's moon illusion and moon phases pages, Stuart Anstis (2002, Vision Research; author-hosted UCSD PDF), and the 2009 Nature Neuroscience macaque-retina paper (PMC2789108). The retinal study is identified as a possible mechanism rather than a universal explanation of human moonlight perception. No physiology simulation was added.
