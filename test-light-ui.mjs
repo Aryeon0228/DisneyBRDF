@@ -9,6 +9,10 @@ class Element {
  replaceChildren(){this.children=[];this.textContent='';}
  append(...values){this.children.push(...values);this.textContent+=values.map(v=>typeof v==='string'?v:v.textContent).join('');}
  focus(){this.focused=true;}
+ setPointerCapture(id){this.pointer=id;}
+ hasPointerCapture(id){return this.pointer===id;}
+ releasePointerCapture(){this.pointer=null;}
+ getBoundingClientRect(){return {width:480};}
  scrollIntoView(){this.scrolled=true;}
  contains(v){return v===this;}
 }
@@ -142,3 +146,14 @@ node('room-reset').onclick();node('room-reach').oninput({target:{value:-5}});ass
 node('room-outside').onchange({target:{value:'moon'}});assert.equal(node('room-outdoor-out').value,'0.2 lx');node('room-fit-window').onclick();assert.ok(node('room-exposure').value>30&&node('room-exposure').value<=42);
 assert.equal(node('left-name').textContent,'촛불');node('room-reset').onclick();node('tab-experiment').onclick();
 console.log('Room controls, fixed shared exposure, additive lux, extreme slider values, independent tabs and zero-light behavior verified.');
+
+const rc=node('room-right-canvas'),lc=node('room-left-canvas');
+const beforeOrbit={lux:node('room-right-lux').textContent,exposure:node('room-exposure').value,count:node('room-count').value};
+const pointer={pointerId:7,pointerType:'touch',isPrimary:true,button:0,clientX:100,clientY:100,preventDefault(){}};
+rc.handlers.pointerdown(pointer);assert.equal(rc.pointer,7);assert.ok(lc.classList.contains('is-orbiting'));
+rc.handlers.pointermove({...pointer,clientX:900,clientY:1000});
+rc.handlers.pointercancel(pointer);assert.equal(rc.pointer,null);assert.ok(!lc.classList.contains('is-orbiting'));
+assert.deepEqual({lux:node('room-right-lux').textContent,exposure:node('room-exposure').value,count:node('room-count').value},beforeOrbit);
+lc.handlers.keydown({key:'ArrowLeft',preventDefault(){}});node('room-view-reset').onclick();assert.equal(node('room-right-lux').textContent,beforeOrbit.lux);
+assert.ok(html.indexOf('<section class="room-exposure">')<html.indexOf('<div class="room-controls">'));
+console.log('Pointer capture/cancel, shared drag feedback, keyboard orbit, lighting preservation and exposure placement verified.');

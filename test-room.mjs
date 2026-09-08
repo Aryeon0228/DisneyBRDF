@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {roomDefaults,configureRoom,roomContributions} from './room-physics.mjs';
-import {renderRoomPair} from './room-renderer.mjs';
+import {renderRoomPair,roomCamera} from './room-renderer.mjs';
 import {linearDisplay,srgb,fitExposure} from './lighting-physics.mjs';
 const base=roomDefaults(),r=roomContributions(base);
 assert.equal(r.windowLux,1000);assert.equal(r.lampLux,1);assert.equal(r.totalLux,1001);assert.equal(r.increasePercent,.1);
@@ -12,7 +12,7 @@ for(const bad of [{distance:0},{count:101},{count:1.5},{reach:0},{outdoorLux:NaN
 assert.deepEqual(base,roomDefaults());
 const zero=roomContributions(configureRoom(base,{windowOn:false,lampOn:false}));assert.equal(zero.totalLux,0);assert.equal(zero.increasePercent,null);assert.equal(zero.stopsAdded,null);
 // Pixel data at the marked receiving surface agrees with the displayed photometry.
-function canvas(){const ctx={frame:null,createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData(f){this.frame=f.data;},strokeRect(){},fillRect(){},fillText(){}};return {ctx,getContext:()=>ctx};}
+function canvas(){const ctx={frame:null,createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData(f){this.frame=f.data;},strokeRect(){},setLineDash(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},stroke(){},fillRect(){},fillText(){}};return {ctx,getContext:()=>ctx};}
 const left=canvas(),right=canvas(),pixel=(167*480+240)*4;
 const cases=[configureRoom(base,{color:false}),configureRoom(dark,{color:false,exposure:fitExposure(1)}),configureRoom(base,{color:false,lampOn:false}),configureRoom(base,{color:false,windowOn:false,lampOn:false})];
 for(const settings of cases){renderRoomPair(left,right,settings);const c=roomContributions(settings);for(const [view,lux] of [[left,c.windowLux],[right,c.totalLux]]){const expected=Math.round(255*srgb(linearDisplay(lux,.18,settings.exposure)));assert.equal(view.ctx.frame[pixel],expected);assert.equal(view.ctx.frame[pixel+1],expected);assert.equal(view.ctx.frame[pixel+2],expected);}}
@@ -20,3 +20,17 @@ assert.deepEqual(left.ctx.frame,right.ctx.frame);
 renderRoomPair(left,right,configureRoom(base,{lampOn:false}));assert.deepEqual(left.ctx.frame,right.ctx.frame);
 renderRoomPair(left,right,configureRoom(dark,{color:true,exposure:fitExposure(1)}));assert.ok(right.ctx.frame[pixel]>right.ctx.frame[pixel+2],'Warm candle color only in the added light');
 console.log('Room photometry, validation, fixed exposure, zero-light states and renderer receiving-patch pixels verified.');
+
+// Camera rotations preserve photometry, change geometry, and remain shared across panes.
+const initialCamera=roomCamera(base);assert.ok(Math.abs(initialCamera.cam[1]-2.8)<1e-10);assert.ok(Math.abs(initialCamera.cam[2]+5)<1e-10);
+renderRoomPair(left,right,base);const initialFrame=left.ctx.frame.slice();
+for(const viewYaw of [-180,-90,90,180]){
+ const settings=configureRoom(base,{viewYaw,viewPitch:35,lampOn:false});
+ assert.deepEqual(roomContributions({...settings,lampOn:true}),r);
+ renderRoomPair(left,right,settings);assert.deepEqual(left.ctx.frame,right.ctx.frame);
+ assert.notDeepEqual(left.ctx.frame,initialFrame);
+}
+renderRoomPair(left,right,base,true);assert.equal(left.width,240);assert.equal(right.height,160);
+renderRoomPair(left,right,base);assert.equal(left.width,480);assert.deepEqual(left.ctx.frame,initialFrame);
+for(const bad of [{viewYaw:NaN},{viewYaw:181},{viewPitch:0},{viewPitch:76}])assert.throws(()=>configureRoom(base,bad));
+console.log('Shared orbit, camera reset, adaptive resolution and view-independent illuminance verified.');
