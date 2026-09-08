@@ -16,7 +16,7 @@ const html=await readFile(new URL('lighting-lab.html',import.meta.url),'utf8'),n
 const ids=['moon','candle','incandescent','fluorescent','sun'];
 const cards=ids.map(source=>Object.assign(new Element(),{dataset:{source}}));
 const assign=ids.flatMap(source=>['left','right'].map(side=>Object.assign(new Element(),{dataset:{source,assign:side}})));
-const presets=['left','right'].flatMap(side=>[100000,10000,100].map(lux=>Object.assign(new Element(),{dataset:{side,lux:String(lux)}})));
+const presets=['left','right'].flatMap(side=>[100000,10000,5000,1000,100,10].map(lux=>Object.assign(new Element(),{dataset:{side,lux:String(lux)}})));
 const zones=['left','right'].map(side=>Object.assign(nodes.get(side+'-drop'),{dataset:{dropSide:side}}));
 const selectors={'.source-card':cards,'[data-assign]':assign,'[data-lux]':presets,'[data-drop-side]':zones};
 globalThis.document={getElementById:id=>{assert.ok(nodes.has(id),'Unknown DOM id '+id);return nodes.get(id);},querySelectorAll:s=>{assert.ok(selectors[s],'Unknown selector '+s);return selectors[s];},createElement:()=>new Element(),addEventListener(){}};
@@ -64,3 +64,33 @@ node('left-offset').oninput({target:{value:16.6}});assert.equal(node('shared').a
 node('fit-left').onclick();assert.equal(node('left-exposure').textContent,'+16.6 stops');assert.equal(node('right-exposure').textContent,'+16.6 stops');assert.equal(node('left-offset').value,0);
 node('reset').onclick();assert.equal(node('left-offset').value,0);assert.equal(node('right-offset').value,0);assert.equal(node('exposure').value,0);
 console.log('Additive common brightness, isolated per-pane adjustments, unchanged lux, fit and resets verified.');
+
+// Icon counts follow the actual source count, including maximum and source reset.
+for(const count of [3,100,1]){
+ node('left-count').oninput({target:{value:count}});
+ assert.equal(node('left-count-icons').children.length,count);
+ assert.equal(node('left-count-icons').attrs['aria-label'],'촛불 '+count+'개');
+ assert.equal(node('left-lux').textContent,count.toFixed(2));
+}
+assign.find(x=>x.dataset.source==='fluorescent'&&x.dataset.assign==='left').onclick();
+assert.equal(node('left-count-icons').children.length,1);
+assert.equal(node('left-count-icons').children[0].src,'assets/fluorescent.png');
+assert.equal(node('left-settings-art').src,'assets/fluorescent.png');
+assert.equal(node('wb-left-art').src,'assets/fluorescent.png');
+for(const lux of [100000,10000,5000,1000,100,10]){
+ const button=presets.find(x=>x.dataset.side==='right'&&+x.dataset.lux===lux);button.onclick();
+ assert.equal(button.attrs['aria-pressed'],true);
+ assert.equal(presets.filter(x=>x.dataset.side==='right'&&x.attrs['aria-pressed']).length,1);
+ assert.equal(node('right-illuminance').value,Math.log10(lux));
+}
+assert.match(node('right-condition').textContent,/어두운 실내/);
+node('right-illuminance').oninput({target:{value:Math.log10(250)}});
+assert.equal(presets.filter(x=>x.dataset.side==='right'&&x.attrs['aria-pressed']).length,0);
+assert.match(node('right-condition').textContent,/직접 설정/);
+assign.find(x=>x.dataset.source==='sun'&&x.dataset.assign==='left').onclick();
+assert.equal(node('left-count-icons').children.length,0);assert.equal(node('left-point').hidden,true);
+presets.find(x=>x.dataset.side==='left'&&+x.dataset.lux===5000).onclick();assert.match(node('left-condition').textContent,/구름/);
+assign.find(x=>x.dataset.source==='moon'&&x.dataset.assign==='right').onclick();
+presets.find(x=>x.dataset.side==='right'&&+x.dataset.lux===100000).onclick();assert.equal(node('right-lux').textContent,'0.20');
+node('reset').onclick();assert.equal(node('left-count-icons').children.length,1);assert.equal(node('right-sun-presets').hidden,false);
+console.log('Source icons, exact 1–100 counts, all six daylight choices on either side, custom lux and source switching verified.');

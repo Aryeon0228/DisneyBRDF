@@ -42,3 +42,10 @@ The render pair comes first, followed by shared brightness, white balance, sourc
 Final exposure per pane = base exposure + common brightness + per-pane offset. Base exposure is zero in shared mode and `fitExposure(lux)` in automatic mode. Common brightness remains enabled in both modes; manual offsets range from −24 to +24 stops. Entering auto via the UI starts from neutral corrections; matching exposures or fitting to one pane clears both manual offsets. A single-pane reset clears only that pane's offset. Source changes retain camera corrections.
 
 WebMCP `exposureStops` always controls common brightness. `leftExposureOffset` / `rightExposureOffset` control manual offsets; omitted configuration fields are preserved. Results include commonExposure, exposureOffsets, and final per-pane exposure.
+
+
+## Source count illustrations and daylight environments
+
+Source illustrations appear beside the physical settings heading, white-balance labels and lux scale labels. Point-source controls display exactly one icon per source, up to 100, inside a bounded scrollable grid. The grid is decorative with a single accessible count label; source changes update the illustration and reset source count using existing preset behavior.
+
+Six daylight environment cards use code-native inline SVG illustrations and receiving-surface example lux: direct sun 100000, outdoor shade 10000, overcast 5000, rainy 1000, indoors 100, dim indoors 10. They apply on either side when sunlight is selected and update the existing lux slider. Manual values outside presets clear selection. No weather-based hue or shadow changes are modeled. Overcast daylight context: https://www.open.edu/openlearn/nature-environment/energy-buildings/content-section-5.2.3 ; magnitude context: https://www.canada.ca/en/conservation-institute/services/agents-deterioration/light.html . Rain and indoor choices are explicit teaching scenarios, not weather measurements or standards.
