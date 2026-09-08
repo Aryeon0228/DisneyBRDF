@@ -94,3 +94,21 @@ assign.find(x=>x.dataset.source==='moon'&&x.dataset.assign==='right').onclick();
 presets.find(x=>x.dataset.side==='right'&&+x.dataset.lux===100000).onclick();assert.equal(node('right-lux').textContent,'0.20');
 node('reset').onclick();assert.equal(node('left-count-icons').children.length,1);assert.equal(node('right-sun-presets').hidden,false);
 console.log('Source icons, exact 1–100 counts, all six daylight choices on either side, custom lux and source switching verified.');
+
+// Physical ruler endpoints remain linear while the distance input is logarithmic.
+for(const distance of [.1,1,1.7,10]){
+ node('left-distance').oninput({target:{value:Math.log10(distance)}});
+ const endpoint=Number(node('left-distance-ray').attrs.x2);
+ assert.ok(Math.abs((endpoint-80)/68-distance/1.7)<1e-10,'Distance relative to the 170 cm person');
+ assert.match(node('left-distance-diagram').attrs['aria-label'],new RegExp(distance.toFixed(2)+'미터'));
+ assert.equal(node('left-distance-value').textContent,distance.toFixed(2)+' m');
+}
+node('left-count').oninput({target:{value:3}});assert.equal(node('left-distance-source-label').textContent,'촛불 × 3');
+assign.find(x=>x.dataset.source==='incandescent'&&x.dataset.assign==='right').onclick();
+node('right-distance').oninput({target:{value:Math.log10(2)}});
+assert.equal(node('right-distance-art').attrs.href,'assets/incandescent.png');
+assert.equal(node('right-distance-ray').attrs.x2,160);
+assign.find(x=>x.dataset.source==='moon'&&x.dataset.assign==='right').onclick();assert.ok(node('right-point').hidden);
+node('reset').onclick();assert.equal(node('left-distance-ray').attrs.x2,120);assert.equal(node('left-distance-art').attrs.href,'assets/candle.png');
+assert.equal(node('left-distance-value').textContent,'1.00 m');
+console.log('Distance ruler scale, limits, per-side source artwork, count caption and reset verified.');
