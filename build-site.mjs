@@ -42,11 +42,11 @@ assert.ok(moonNeutral.left[2]>moonNeutral.left[0]);
 assert.deepEqual(comparisonColors(preset('candle'),preset('moon'),'left',false),{left:[1,1,1],right:[1,1,1]});
 assert.throws(()=>validateSettings({whiteBalance:'unknown'}));
 const html=await readFile('lighting-lab.html','utf8');
-const js=await readFile('lighting-lab.js','utf8');
+const js=(await Promise.all(['lighting-lab.js','room-lab.mjs'].map(f=>readFile(f,'utf8')))).join('\n');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length,'Duplicate element ids');
 for(const match of js.matchAll(/\$\('([^']+)'\)/g)) assert.ok(ids.includes(match[1]),`Missing #${match[1]}`);
-const files=['light-sources.mjs','lighting-lab.html','lighting-lab.css','lighting-lab.js','lighting-physics.mjs','brdf-viewer.html'];
+const files=['room-lab.mjs','room-physics.mjs','room-renderer.mjs','light-sources.mjs','lighting-lab.html','lighting-lab.css','lighting-lab.js','lighting-physics.mjs','brdf-viewer.html'];
 await mkdir('dist/assets',{recursive:true});
 for (const name of ['candle','sun','moon','incandescent','fluorescent']) {
  const bytes=await readFile(`assets/${name}.png`);

@@ -19,7 +19,9 @@ const assign=ids.flatMap(source=>['left','right'].map(side=>Object.assign(new El
 const presets=['left','right'].flatMap(side=>[100000,10000,5000,1000,100,10].map(lux=>Object.assign(new Element(),{dataset:{side,lux:String(lux)}})));
 const countPresets=['left','right'].flatMap(side=>[1,3,10,30,50,100].map(count=>Object.assign(new Element(),{dataset:{side,count:String(count)}})));
 const zones=['left','right'].map(side=>Object.assign(nodes.get(side+'-drop'),{dataset:{dropSide:side}}));
-const selectors={'.source-card':cards,'[data-assign]':assign,'[data-lux]':presets,'[data-count]':countPresets,'[data-drop-side]':zones};
+const roomCounts=[1,3,30,50,100].map(n=>Object.assign(new Element(),{dataset:{roomCount:String(n)}}));
+const reaches=[.01,.00001].map(n=>Object.assign(new Element(),{dataset:{reach:String(n)}}));
+const selectors={'[data-room-count]':roomCounts,'[data-reach]':reaches,'.source-card':cards,'[data-assign]':assign,'[data-lux]':presets,'[data-count]':countPresets,'[data-drop-side]':zones};
 globalThis.document={getElementById:id=>{assert.ok(nodes.has(id),'Unknown DOM id '+id);return nodes.get(id);},querySelectorAll:s=>{assert.ok(selectors[s],'Unknown selector '+s);return selectors[s];},createElement:()=>new Element(),addEventListener(){}};
 globalThis.requestAnimationFrame=()=>0;
 await import('./lighting-lab.js');
@@ -41,7 +43,7 @@ console.log('UI handler checks passed: drop, click assignment, distance, cancel,
 node('wb-left').onclick();assert.equal(node('wb-left').attrs['aria-pressed'],true);assert.equal(node('left-lux').textContent,'1.00');assert.equal(node('stops').textContent,'16.61');
 node('warm').onchange({target:{checked:false}});assert.ok(node('wb-left').disabled);assert.match(node('color-status').textContent,/밝기만/);
 node('tab-guide').onclick();assert.equal(node('guide').hidden,false);assert.equal(node('experiment-panel').hidden,true);assert.equal(node('tab-guide').attrs['aria-selected'],true);
-node('tab-guide').handlers.keydown({key:'ArrowLeft',preventDefault(){}});assert.equal(node('guide').hidden,true);assert.ok(node('tab-experiment').focused);
+node('tab-guide').handlers.keydown({key:'ArrowLeft',preventDefault(){}});assert.equal(node('room-panel').hidden,false);node('tab-room').handlers.keydown({key:'ArrowLeft',preventDefault(){}});assert.equal(node('guide').hidden,true);assert.ok(node('tab-experiment').focused);
 node('color-help').onclick();assert.ok(node('color-guide').scrolled);assert.equal(node('guide').hidden,false);
 node('back-experiment').onclick();assert.equal(node('guide').hidden,true);
 node('reset').onclick();assert.equal(node('wb-neutral').attrs['aria-pressed'],true);assert.equal(node('wb-left').disabled,false);
@@ -126,3 +128,17 @@ node('left-count').oninput({target:{value:4}});assert.equal(countPresets.filter(
 node('left-offset').oninput({target:{value:2}});assert.equal(node('left-offset-summary').value,'+2.0 stops');
 node('reset').onclick();assert.equal(node('left-offset-summary').value,'+0.0 stops');
 console.log('Quick count presets, slider synchronization, other-pane isolation and collapsed exposure summaries verified.');
+
+// Window-room UI is independent of the original source experiment.
+node('tab-room').onclick();assert.equal(node('room-panel').hidden,false);assert.equal(node('experiment-panel').hidden,true);
+assert.equal(node('room-left-lux').textContent,'1,000 lx');assert.equal(node('room-right-lux').textContent,'1,001 lx');
+const initialExposure=node('room-exposure').value;
+reaches[1].onclick();assert.equal(node('room-left-lux').textContent,'1 lx');assert.equal(node('room-right-lux').textContent,'2 lx');assert.equal(node('room-exposure').value,initialExposure);
+roomCounts[2].onclick();assert.equal(node('room-count').value,30);assert.equal(node('room-right-lux').textContent,'31 lx');
+node('room-distance').oninput({target:{value:Math.log10(2)}});assert.equal(node('room-lamp-value').textContent,'7.5 lx');
+node('room-window-on').onchange({target:{checked:false}});assert.ok(node('room-fit-window').disabled);assert.equal(node('room-left-lux').textContent,'0 lx');
+node('room-lamp-on').onchange({target:{checked:false}});assert.ok(node('room-fit-total').disabled);assert.equal(node('room-change').textContent,'두 빛 모두 꺼짐');
+node('room-reset').onclick();node('room-reach').oninput({target:{value:-5}});assert.equal(node('room-left-lux').textContent,'1 lx');
+node('room-outside').onchange({target:{value:'moon'}});assert.equal(node('room-outdoor-out').value,'0.2 lx');node('room-fit-window').onclick();assert.ok(node('room-exposure').value>30&&node('room-exposure').value<=42);
+assert.equal(node('left-name').textContent,'촛불');node('room-reset').onclick();node('tab-experiment').onclick();
+console.log('Room controls, fixed shared exposure, additive lux, extreme slider values, independent tabs and zero-light behavior verified.');

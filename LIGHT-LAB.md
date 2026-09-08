@@ -66,3 +66,12 @@ Count illustrations and the human-scale distance guide live in native disclosure
 ## Moonlight and perception guide
 
 The explanation tab now separates atmospheric yellowing of the lunar disk, the Purkinje shift in relative brightness sensitivity, rod–cone contributions to bluish impressions, and the lab's art-directed cyan. Claims link inline to NASA's moon illusion and moon phases pages, Stuart Anstis (2002, Vision Research; author-hosted UCSD PDF), and the 2009 Nature Neuroscience macaque-retina paper (PMC2789108). The retinal study is identified as a possible mechanism rather than a universal explanation of human moonlight perception. No physiology simulation was added.
+
+
+## Window-room experiment
+
+A third top-level tab places outdoor sun/moon and indoor candle/bulbs in the same educational room. The left view has window light only; the right adds a local source. Shared exposure is fixed until the user changes it or explicitly fits both views to one contribution. Initial values are outside 100000 lx × receiving fraction 1% = 1000 lx, plus a candle at 1 m = 1 lx. Weak-window shortcut uses 0.001%, yielding 1 lx so the same candle doubles illuminance. Room controls do not mutate the existing independent light-comparison experiment.
+
+`room-physics.mjs` validates updates atomically and computes receiving-plane contributions. Zero baselines return null ratios and no division-by-zero output. `room-renderer.mjs` traces a fixed room/window/block and samples the measured front face, adds daylight and local light in linear space, then applies identical reflectance/exposure/tone mapping. Window direction/mask is fixed; a small soft-window component approximates scattered light. The marked patch uses its center's illuminance uniformly. Window-surface brightness is illustrative. The receiving fraction combines geometry/shading effects and is explicitly not glass transmittance or a daylight-factor calculation. It is not an architectural daylight solver or a flame luminance model. No student artwork is uploaded or embedded.
+
+WebMCP `configure_window_room` supports outdoor source/lux, reach, local source/count/distance, switches, shared exposure and color. It opens the room tab after a valid update and returns both contributions, sum, increase and source share. Run `node test-room.mjs` for photometry and receiving-pixel checks, `node test-light-ui.mjs` for controls/tab isolation, and `node build-site.mjs` to package the static runtime.
