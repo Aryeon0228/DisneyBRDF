@@ -54,3 +54,10 @@ Six daylight environment cards use code-native inline SVG illustrations and rece
 ## Human-scale distance guide
 
 Below each point-source distance slider, an SVG ruler compares the source position with a 170 cm person. Both axes use the same fixed scale (40 SVG units per metre); the person is 68 units high and the 0–10 m ruler spans 400 units. The source point moves linearly with physical distance even though the slider itself is logarithmic. The light icon is a symbolic callout above the source point so 0.1 m remains legible; its artwork is not a physical size reference. A small receiving plane by the person's hand is the distance origin. Multiple sources share that distance, as in the illuminance model. Sun/moon controls do not show this point-source distance diagram. Narrow screens stack source settings so the guide stays legible.
+
+
+## Comparison workbench layout
+
+Physical count/distance/lux and daylight choices now sit directly beneath the corresponding live render. Quick count buttons offer 1, 3, 10, 30, 50 and 100 sources using the same state as the count slider. The single render pair and ratio remain sticky within the experiment while users adjust controls below; at very short viewport heights stickiness is disabled to avoid covering the available space. Render height is bounded by viewport height. No duplicate canvases or parallel control states were added.
+
+Count illustrations and the human-scale distance guide live in native disclosure panels. Per-pane exposure has its own disclosure with the current correction visible when collapsed. Global brightness, white balance and drag source library remain below the primary source controls. Individual cards size to their own content so a moonlight control no longer stretches to the size of a neighbor's distance illustration.

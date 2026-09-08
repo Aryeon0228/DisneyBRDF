@@ -17,8 +17,9 @@ const ids=['moon','candle','incandescent','fluorescent','sun'];
 const cards=ids.map(source=>Object.assign(new Element(),{dataset:{source}}));
 const assign=ids.flatMap(source=>['left','right'].map(side=>Object.assign(new Element(),{dataset:{source,assign:side}})));
 const presets=['left','right'].flatMap(side=>[100000,10000,5000,1000,100,10].map(lux=>Object.assign(new Element(),{dataset:{side,lux:String(lux)}})));
+const countPresets=['left','right'].flatMap(side=>[1,3,10,30,50,100].map(count=>Object.assign(new Element(),{dataset:{side,count:String(count)}})));
 const zones=['left','right'].map(side=>Object.assign(nodes.get(side+'-drop'),{dataset:{dropSide:side}}));
-const selectors={'.source-card':cards,'[data-assign]':assign,'[data-lux]':presets,'[data-drop-side]':zones};
+const selectors={'.source-card':cards,'[data-assign]':assign,'[data-lux]':presets,'[data-count]':countPresets,'[data-drop-side]':zones};
 globalThis.document={getElementById:id=>{assert.ok(nodes.has(id),'Unknown DOM id '+id);return nodes.get(id);},querySelectorAll:s=>{assert.ok(selectors[s],'Unknown selector '+s);return selectors[s];},createElement:()=>new Element(),addEventListener(){}};
 globalThis.requestAnimationFrame=()=>0;
 await import('./lighting-lab.js');
@@ -112,3 +113,16 @@ assign.find(x=>x.dataset.source==='moon'&&x.dataset.assign==='right').onclick();
 node('reset').onclick();assert.equal(node('left-distance-ray').attrs.x2,120);assert.equal(node('left-distance-art').attrs.href,'assets/candle.png');
 assert.equal(node('left-distance-value').textContent,'1.00 m');
 console.log('Distance ruler scale, limits, per-side source artwork, count caption and reset verified.');
+
+// Quick count actions update the same slider, illustrations, lux and render state.
+for(const count of [1,3,10,30,50,100]){
+ const button=countPresets.find(x=>x.dataset.side==='left'&&+x.dataset.count===count);button.onclick();
+ assert.equal(node('left-count').value,count);assert.equal(node('left-count-icons').children.length,count);
+ assert.equal(node('left-lux').textContent,count.toFixed(2));assert.equal(button.attrs['aria-pressed'],true);
+ assert.equal(countPresets.filter(x=>x.dataset.side==='left'&&x.attrs['aria-pressed']).length,1);
+ assert.equal(node('right-lux').textContent,'100,000');
+}
+node('left-count').oninput({target:{value:4}});assert.equal(countPresets.filter(x=>x.dataset.side==='left'&&x.attrs['aria-pressed']).length,0);
+node('left-offset').oninput({target:{value:2}});assert.equal(node('left-offset-summary').value,'+2.0 stops');
+node('reset').onclick();assert.equal(node('left-offset-summary').value,'+0.0 stops');
+console.log('Quick count presets, slider synchronization, other-pane isolation and collapsed exposure summaries verified.');
