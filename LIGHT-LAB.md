@@ -33,3 +33,12 @@
 - 수치 검증: 기준광의 중립화, 촛불 기준에서 햇빛의 청색 증가, 양쪽 휘도 정규화, 색 끄기, 잘못된 기준 거부.
 - UI 대역 검증: 기준 선택, 색 끄기, 탭 이동·키보드 이동·설명 바로가기 및 초기화.
 - 지원 브라우저의 WebMCP에서 촛불/햇빛의 상대적 색 변화, 달빛의 시안 기본값, 잘못된 기준 거부 및 상태 유지까지 확인했습니다.
+
+
+## Sketch layout and additive exposure
+
+The render pair comes first, followed by shared brightness, white balance, source cards, source-specific measurement controls, and shared reflectance. Explanations remain in their own tab.
+
+Final exposure per pane = base exposure + common brightness + per-pane offset. Base exposure is zero in shared mode and `fitExposure(lux)` in automatic mode. Common brightness remains enabled in both modes; manual offsets range from −24 to +24 stops. Entering auto via the UI starts from neutral corrections; matching exposures or fitting to one pane clears both manual offsets. A single-pane reset clears only that pane's offset. Source changes retain camera corrections.
+
+WebMCP `exposureStops` always controls common brightness. `leftExposureOffset` / `rightExposureOffset` control manual offsets; omitted configuration fields are preserved. Results include commonExposure, exposureOffsets, and final per-pane exposure.

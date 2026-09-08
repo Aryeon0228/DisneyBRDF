@@ -21,8 +21,11 @@ for (const a of Object.keys(SOURCES)) for (const b of Object.keys(SOURCES)) {
  near(linearDisplay(auto.left.lux,.18,auto.left.exposure),.18);
  near(linearDisplay(auto.right.lux,.18,auto.right.exposure),.18);
 }
-for (const bad of [{leftSource:'invalid'},{rightDistance:0},{leftCount:1.5},{rightLux:NaN},{leftSource:['sun']},{extra:true}]) assert.throws(()=>validateSettings(bad));
+for (const bad of [{leftSource:'invalid'},{rightDistance:0},{leftCount:1.5},{rightLux:NaN},{leftSource:['sun']},{extra:true},{leftExposureOffset:25},{rightExposureOffset:NaN}]) assert.throws(()=>validateSettings(bad));
 validateSettings({leftSource:'moon',rightSource:'fluorescent',mode:'individual'});
+const adjusted=comparison(preset('candle'),preset('sun'),'individual',2,{left:-1,right:3});
+near(adjusted.left.exposure,fitExposure(1)+1);near(adjusted.right.exposure,5);near(adjusted.left.lux,1);
+validateSettings({leftExposureOffset:-24,rightExposureOffset:24});
 const Y=color=>.2126*color[0]+.7152*color[1]+.0722*color[2];
 for(const id of Object.keys(SOURCES)){
  const neutralized=balancedColor(SOURCES[id].color,SOURCES[id].color);

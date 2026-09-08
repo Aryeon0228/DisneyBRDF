@@ -33,7 +33,7 @@ node('left-distance').oninput({target:{value:Math.log10(2)}});assert.equal(node(
 event=drag('sun');cards.find(x=>x.dataset.source==='sun').handlers.dragend();zones[0].handlers.drop(event);assert.equal(node('left-name').textContent,'백열등');
 event=drag('moon');event.dataTransfer.setData('application/x-penumbra-source','invalid');zones[0].handlers.drop(event);assert.equal(node('left-name').textContent,'백열등');
 event=drag('candle');zones[0].handlers.drop(event);assert.equal(node('left-lux').textContent,'1.00');assert.equal(node('left-distance').value,0);
-node('individual').onclick();assert.ok(node('exposure').disabled);assert.equal(node('individual').attrs['aria-pressed'],true);
+node('individual').onclick();assert.equal(node('exposure').disabled,false);assert.equal(node('individual').attrs['aria-pressed'],true);
 node('reset').onclick();assert.equal(node('left-name').textContent,'촛불');assert.equal(node('right-name').textContent,'햇빛');assert.equal(node('stops').textContent,'16.61');assert.equal(node('exposure').disabled,false);
 console.log('UI handler checks passed: drop, click assignment, distance, cancel, invalid payload, per-source reset, exposure and full reset.');
 
@@ -45,3 +45,22 @@ node('color-help').onclick();assert.ok(node('color-guide').scrolled);assert.equa
 node('back-experiment').onclick();assert.equal(node('guide').hidden,true);
 node('reset').onclick();assert.equal(node('wb-neutral').attrs['aria-pressed'],true);assert.equal(node('wb-left').disabled,false);
 console.log('White balance controls, disabled color state, explanation tabs, keyboard navigation, help and reset verified.');
+
+// Common brightness remains additive in auto mode; individual controls affect only their pane.
+node('individual').onclick();
+assert.equal(node('left-exposure').textContent,'+16.6 stops');
+assert.equal(node('right-exposure').textContent,'+0.0 stops');
+node('exposure').oninput({target:{value:2}});
+assert.equal(node('left-exposure').textContent,'+18.6 stops');
+assert.equal(node('right-exposure').textContent,'+2.0 stops');
+node('left-offset').oninput({target:{value:-1}});
+assert.equal(node('left-exposure').textContent,'+17.6 stops');
+assert.equal(node('right-exposure').textContent,'+2.0 stops');
+assert.equal(node('left-lux').textContent,'1.00');assert.equal(node('stops').textContent,'16.61');
+node('left-offset-reset').onclick();assert.equal(node('left-exposure').textContent,'+18.6 stops');
+node('right-offset').oninput({target:{value:3}});
+node('shared').onclick();assert.equal(node('left-exposure').textContent,'+2.0 stops');assert.equal(node('right-exposure').textContent,'+2.0 stops');
+node('left-offset').oninput({target:{value:16.6}});assert.equal(node('shared').attrs['aria-pressed'],false);
+node('fit-left').onclick();assert.equal(node('left-exposure').textContent,'+16.6 stops');assert.equal(node('right-exposure').textContent,'+16.6 stops');assert.equal(node('left-offset').value,0);
+node('reset').onclick();assert.equal(node('left-offset').value,0);assert.equal(node('right-offset').value,0);assert.equal(node('exposure').value,0);
+console.log('Additive common brightness, isolated per-pane adjustments, unchanged lux, fit and resets verified.');
