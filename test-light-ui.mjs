@@ -170,3 +170,13 @@ node('room-lamp-on').onchange({target:{checked:false}});assert.ok(node('room-fit
 node('room-fit-lamp').onclick();assert.equal(node('room-exposure').value,fittedLocal);
 node('room-reset').onclick();assert.equal(node('room-fit-lamp').disabled,false);
 console.log('Local-only exposure fitting, shared lighting preservation, count/distance calibration and disabled zero-light fit verified.');
+
+// Small receiving fractions stay readable as decimals, including the reported 9.99e-3% case.
+for(const [fraction,label] of [[0.0000999,'0.00999%'],[0.00001,'0.001%'],[0.0001,'0.01%'],[0.01,'1%'],[1,'100%']]){
+ node('room-reach').oninput({target:{value:Math.log10(fraction)}});
+ assert.equal(node('room-reach-out').value,label);assert.equal(node('room-reach').attrs['aria-valuetext'],label);
+}
+node('room-outdoor-lux').oninput({target:{value:-2}});node('room-reach').oninput({target:{value:-5}});
+assert.equal(node('room-left-lux').textContent,'0.0000001 lx');
+node('room-window-on').onchange({target:{checked:false}});assert.equal(node('room-left-lux').textContent,'0 lx');
+console.log('Small percentages and minimum nonzero illuminance use decimal notation; zero remains distinct.');
