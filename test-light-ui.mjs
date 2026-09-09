@@ -157,3 +157,16 @@ assert.deepEqual({lux:node('room-right-lux').textContent,exposure:node('room-exp
 lc.handlers.keydown({key:'ArrowLeft',preventDefault(){}});node('room-view-reset').onclick();assert.equal(node('room-right-lux').textContent,beforeOrbit.lux);
 assert.ok(html.indexOf('<section class="room-exposure">')<html.indexOf('<div class="room-controls">'));
 console.log('Pointer capture/cancel, shared drag feedback, keyboard orbit, lighting preservation and exposure placement verified.');
+
+// Fit to the local contribution alone, while retaining both lights and one shared exposure.
+node('room-reset').onclick();
+node('room-fit-lamp').onclick();assert.equal(node('room-exposure').value,Math.log2(100000));
+assert.equal(node('room-left-lux').textContent,'1,000 lx');assert.equal(node('room-right-lux').textContent,'1,001 lx');
+node('room-count').oninput({target:{value:30}});node('room-distance').oninput({target:{value:Math.log10(2)}});
+node('room-fit-lamp').onclick();assert.ok(Math.abs(node('room-exposure').value-Math.log2(100000/7.5))<1e-10);
+const fittedLocal=node('room-exposure').value;node('room-window-on').onchange({target:{checked:false}});
+assert.equal(node('room-exposure').value,fittedLocal);assert.equal(node('room-right-lux').textContent,'7.5 lx');
+node('room-lamp-on').onchange({target:{checked:false}});assert.ok(node('room-fit-lamp').disabled);
+node('room-fit-lamp').onclick();assert.equal(node('room-exposure').value,fittedLocal);
+node('room-reset').onclick();assert.equal(node('room-fit-lamp').disabled,false);
+console.log('Local-only exposure fitting, shared lighting preservation, count/distance calibration and disabled zero-light fit verified.');
