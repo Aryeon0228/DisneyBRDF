@@ -135,7 +135,7 @@ console.log('Quick count presets, slider synchronization, other-pane isolation a
 
 // Window-room UI is independent of the original source experiment.
 node('tab-room').onclick();assert.equal(node('room-panel').hidden,false);assert.equal(node('experiment-panel').hidden,true);
-assert.equal(node('room-left-lux').textContent,'1,000 lx');assert.equal(node('room-right-lux').textContent,'1,001 lx');
+assert.equal(node('room-left-lux').textContent,'3 lx');assert.equal(node('room-right-lux').textContent,'4 lx');
 const initialExposure=node('room-exposure').value;
 reaches[1].onclick();assert.equal(node('room-left-lux').textContent,'1 lx');assert.equal(node('room-right-lux').textContent,'2 lx');assert.equal(node('room-exposure').value,initialExposure);
 roomCounts[2].onclick();assert.equal(node('room-count').value,30);assert.equal(node('room-right-lux').textContent,'31 lx');
@@ -161,7 +161,7 @@ console.log('Pointer capture/cancel, shared drag feedback, keyboard orbit, light
 // Fit to the local contribution alone, while retaining both lights and one shared exposure.
 node('room-reset').onclick();
 node('room-fit-lamp').onclick();assert.equal(node('room-exposure').value,Math.log2(100000));
-assert.equal(node('room-left-lux').textContent,'1,000 lx');assert.equal(node('room-right-lux').textContent,'1,001 lx');
+assert.equal(node('room-left-lux').textContent,'3 lx');assert.equal(node('room-right-lux').textContent,'4 lx');
 node('room-count').oninput({target:{value:30}});node('room-distance').oninput({target:{value:Math.log10(2)}});
 node('room-fit-lamp').onclick();assert.ok(Math.abs(node('room-exposure').value-Math.log2(100000/7.5))<1e-10);
 const fittedLocal=node('room-exposure').value;node('room-window-on').onchange({target:{checked:false}});
@@ -180,3 +180,9 @@ node('room-outdoor-lux').oninput({target:{value:-2}});node('room-reach').oninput
 assert.equal(node('room-left-lux').textContent,'0.0000001 lx');
 node('room-window-on').onchange({target:{checked:false}});assert.equal(node('room-left-lux').textContent,'0 lx');
 console.log('Small percentages and minimum nonzero illuminance use decimal notation; zero remains distinct.');
+
+node('room-reset').onclick();assert.equal(node('room-bloom').checked,true);assert.equal(node('room-exposure').value,Math.log2(25000));
+node('room-bloom').onchange({target:{checked:false}});assert.equal(node('room-bloom').checked,false);
+assert.equal(node('room-left-lux').textContent,'3 lx');assert.equal(node('room-right-lux').textContent,'4 lx');
+assert.equal(node('room-exposure').value,Math.log2(25000));node('room-reset').onclick();assert.equal(node('room-bloom').checked,true);
+console.log('New room defaults, bloom toggle and reset retain common exposure and physical contributions.');
